@@ -1,0 +1,85 @@
+-- Um Module que fiz para praticar. Espero que isso aqui seja um pouco útil!
+
+local RobloxPlus = {}
+RobloxPlus.__index = RobloxPlus
+
+local DataStoreService = game:GetService("DataStoreService")
+
+
+function RobloxPlus.CreateLeaderstats(player: Player)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = player
+	return leaderstats
+end
+
+function RobloxPlus.AddValueToLeaderStats(leaderstats: Folder, type: ValueBase, name: string, value: any)
+	
+	local valueInstance = Instance.new(type)
+	
+	if valueInstance then
+		valueInstance.Parent = leaderstats
+		valueInstance.Name = name
+		valueInstance.Value = value
+	else
+		warn("Value needs to be an StringValue, IntValue or an BoolValue.")
+	end
+end
+
+function RobloxPlus.SavePlayerData(player: Player)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats then
+		local data = {}
+		for _, value in pairs(leaderstats:GetChildren()) do
+			data[value.Name] = value.Value
+		end
+		local success, err = pcall(function()
+			local dataStore = DataStoreService:GetDataStore(player.Name)
+			dataStore:SetAsync(player.UserId, data)
+		end)
+		if not success then
+			warn("Failed to save data: "..err)
+		end
+	end
+end
+
+function RobloxPlus.LoadPlayerData(player: Player)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	local data = nil
+	local success, err = pcall(function()
+		local dataStore = DataStoreService:GetDataStore(player.Name)
+		data = dataStore:GetAsync(player.UserId)
+	end)
+	if data and success then
+		for name, value in pairs(data) do
+			local valueInstance = leaderstats:FindFirstChild(name)
+			if valueInstance then
+				valueInstance.Value = value
+			end
+		end
+	end
+end
+
+function RobloxPlus.HasStats(player: Player, valueName: string, minValue: number)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	
+	local Value = leaderstats:FindFirstChild(valueName)
+	
+	if Value then
+		if Value.Value >= minValue then
+			return true
+		else
+			return false
+		end
+	else
+		warn("Value not found")
+	end
+end
+
+function RobloxPlus.LoadAllCharacters()
+	for _, player in pairs(game.Players:GetPlayers()) do
+		player:LoadCharacter()
+	end
+end
+
+return RobloxPlus
